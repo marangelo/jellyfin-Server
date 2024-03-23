@@ -1,0 +1,97 @@
+version: "2.1"
+services:
+  samba:
+    image: dperson/samba # no hay tag con versiones, solo latest
+    container_name: cn_samba
+    restart: unless-stopped
+    command: '-u "pi;password" -s "media;/media;yes;no" '
+    stdin_open: true
+    tty: true
+    environment:
+      - TZ=America/Managua
+    ports:
+      - 139:139
+      - 445:445
+    volumes:
+      - ${MEDIA}:/media
+
+  jellyfin:
+    #image: lscr.io/linuxserver/jellyfin:latest
+    image: lscr.io/linuxserver/jellyfin:10.8.13
+    container_name: cn_jellyfin
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=America/Managua
+      - JELLYFIN_PublishedServerUrl=186.1.15.166 #optional
+    volumes:
+      - ${STORAGE}/library:/config
+      - ${STORAGE}/tvseries:/data/tvshows
+      - ${STORAGE}/movies:/data/movies
+    ports:
+      - 8096:8096
+      - 8920:8920 #optional
+      - 7359:7359/udp #optional
+      #- 1900:1900/udp #optional
+    restart: always
+    networks:
+        net_jellyfin:
+    # deploy:
+    #     resources:
+    #       limits:
+    #         memory: 4GB
+    #         cpus: '1.50'
+    #       reservations:
+    #         memory: 2GB
+
+
+  transmission:
+    image : jaymoulin/transmission:3.00-1.6.1
+    container_name: cn_transmission
+    command: transmission-daemon -f -g /config
+    volumes:
+      - ./transmission:/config
+      - ${STORAGE}/torrents:/downloads
+    ports:
+      - 51413:51413
+      - 51413:51413/udp
+    expose:
+      - 9091
+    restart: unless-stopped
+    networks:
+        net_jellyfin:
+
+  flexget:
+    image: wiserain/flexget:3.5
+    container_name: cn_flexget
+    volumes:
+      - ./flexget:/config
+      - ./flexget/custom-cont-init.d:/custom-cont-init.d
+      - ${STORAGE}/torrents:/downloads
+      - ${MEDIA}:/storage
+    ports:
+      - 5050:5050
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TORRENT_PLUGIN=transmission
+      - FG_WEBUI_PASSWD=@3^cCkj4MeaJ!mGk # la puedes cambiar por la que quieras
+    restart: unless-stopped
+    networks:
+        net_jellyfin:
+
+networks:
+   net_jellyfin:
+      name: net_jellyfin
+      driver: bridge  
+#vsftpd:
+  #  image: panubo/vsftpd 
+  #  container_name: cn_vsftpd
+  #  environment:
+  #    - FTP_USER=jellyfin
+   #   - FTP_PASSWORD=a7m1425.
+   # volumes:
+   #   - ${STORAGE}/movies:/srv
+   # expose:
+   #   - 21
+   # network_mode: host
