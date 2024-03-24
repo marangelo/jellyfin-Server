@@ -1,20 +1,5 @@
 version: "2.1"
 services:
-  samba:
-    image: dperson/samba # no hay tag con versiones, solo latest
-    container_name: cn_samba
-    restart: unless-stopped
-    command: '-u "pi;password" -s "media;/media;yes;no" '
-    stdin_open: true
-    tty: true
-    environment:
-      - TZ=America/Managua
-    ports:
-      - 139:139
-      - 445:445
-    volumes:
-      - ${MEDIA}:/media
-
   jellyfin:
     #image: lscr.io/linuxserver/jellyfin:latest
     image: lscr.io/linuxserver/jellyfin:10.8.13
@@ -43,7 +28,6 @@ services:
     #         cpus: '1.50'
     #       reservations:
     #         memory: 2GB
-
 
   transmission:
     image : jaymoulin/transmission:3.00-1.6.1
@@ -81,18 +65,34 @@ services:
     networks:
         net_jellyfin:
 
-networks:
+  samba:
+    image: dperson/samba # no hay tag con versiones, solo latest
+    container_name: cn_samba
+    restart: unless-stopped
+    command: '-u "pi;password" -s "media;/media;yes;no" '
+    stdin_open: true
+    tty: true
+    environment:
+      - TZ=America/Managua
+    ports:
+      - 139:139
+      - 445:445
+    volumes:
+      - ${MEDIA}:/media
+
+  vsftpd:
+   image: panubo/vsftpd 
+   container_name: cn_vsftpd
+   environment:
+     - FTP_USER=jellyfin
+     - FTP_PASSWORD=a7m1425.
+   volumes:
+     - ${STORAGE}/movies:/srv
+   expose:
+     - 21
+   network_mode: host
+
+  networks:
    net_jellyfin:
       name: net_jellyfin
       driver: bridge  
-#vsftpd:
-  #  image: panubo/vsftpd 
-  #  container_name: cn_vsftpd
-  #  environment:
-  #    - FTP_USER=jellyfin
-   #   - FTP_PASSWORD=a7m1425.
-   # volumes:
-   #   - ${STORAGE}/movies:/srv
-   # expose:
-   #   - 21
-   # network_mode: host
