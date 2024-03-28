@@ -81,18 +81,18 @@ services:
       - ${MEDIA}:/media
 
   vsftpd:
-   image: panubo/vsftpd 
-   container_name: cn_vsftpd
-   environment:
-     - FTP_USER=jellyfin
-     - FTP_PASSWORD=a7m1425.
-   volumes:
-     - ${STORAGE}/movies:/srv
-   expose:
-     - 21
-   network_mode: host
+    image: panubo/vsftpd 
+    container_name: cn_vsftpd
+    environment:
+      - FTP_USER=jellyfin
+      - FTP_PASSWORD=a7m1425.
+    volumes:
+      - ${STORAGE}/movies:/srv
+    expose:
+      - 21
+    network_mode: host
 
 networks:
- net_jellyfin:
+  net_jellyfin:
     name: net_jellyfin
     driver: bridge  
